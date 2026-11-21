@@ -1,95 +1,98 @@
-<img align="right" width="100" src="https://avatars.githubusercontent.com/u/100565733?s=200" alt="Super Lsky Pro Logo"/>
+<div align="center">
 
-<h1 align="left">☁️ 兰空网盘 (Super Lsky Pro)</h1>
+# Super Lsky Pro
 
-**Your media & files on the cloud.** —— 基于 [Lsky Pro v2](https://github.com/lsky-org/lsky-pro) 深度魔改的全格式多媒体图床与轻量级私有云网盘。
+**基于 Lsky Pro v2 深度改造的全格式多媒体图床与轻量级私有云盘**
 
-[![PHP](https://img.shields.io/badge/PHP->=8.0.2-orange.svg)](https://www.php.net)
-[![Mod Guide](https://img.shields.io/badge/Blog-魔改技术指南-blueviolet.svg)](https://yyzmiao.top/2026/06/10/lskypro/)
-[![Base](https://img.shields.io/badge/Based%20on-Lsky%20Pro%20v2-00b4d8.svg)](https://github.com/lsky-org/lsky-pro)
-[![License](https://img.shields.io/badge/license-GPL_v3.0-yellowgreen.svg)](./LICENSE)
+全格式文件放行 · 浏览器端 Canvas 视频自动截帧 · 零 FFmpeg 服务端依赖 · 全站原生视频弹窗播放
 
-[📖 魔改技术博文](https://yyzmiao.top/2026/06/10/lskypro/) &middot;
-[🛠️ 本地魔改手册](./docs/MOD_GUIDE.md) &middot;
-[📘 Lsky Pro 原版文档](https://docs.lsky.pro) &middot;
-[🏠 作者博客 (一叶梓喵)](https://yyzmiao.top)
+<p>
+  <a href="https://github.com/yyzmia1/super-lsky-pro/releases"><img alt="Base Version" src="https://img.shields.io/badge/Base-Lsky%20Pro%20v2-0369A1?style=flat-square" /></a>
+  <a href="LICENSE"><img alt="License: GPL v3" src="https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square" /></a>
+  <img alt="PHP" src="https://img.shields.io/badge/PHP-%3E%3D8.0.2-777BB4?style=flat-square&logo=php&logoColor=white" />
+  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-Blade%20%2B%20JS-FF2D20?style=flat-square&logo=laravel&logoColor=white" />
+</p>
 
----
+<p>
+  <a href="https://yyzmiao.top/2026/06/10/lskypro/">技术博文</a> ·
+  <a href="docs/MOD_GUIDE.md">改造文档</a> ·
+  <a href="https://docs.lsky.pro">上游文档</a>
+</p>
 
-## ✨ 为什么需要 Super Lsky Pro？
-
-原版 **Lsky Pro (兰空图床)** 是一款极其优雅的开源云相册与图床系统，但受限于其“纯图片图床”的设计定位：
-1. **严格限制上传后缀**：无法上传视频（`.mp4` / `.webm` / `.mov` 等）及其他通用网盘文件；
-2. **非图片处理崩溃**：强行放开后缀会导致 `Intervention/Image` 图像压缩、水印叠加与鉴黄扫描在处理视频或普通文件时直接报错中断；
-3. **无视频封面与播放能力**：即使通过底层绕过上传，画廊中也只会显示裂图，且 `Viewer.js` 灯箱无法播放视频。
-
-**Super Lsky Pro（兰空网盘）** 在不引入任何臃肿后端组件（**零 FFmpeg 依赖**、不额外消耗低配服务器 CPU/内存）的前提下，通过前后端协同改造，让兰空图床平滑进化为**支持全格式文件托管、视频自动提取封面、全站原生弹窗播放**的全能多媒体云盘！
+</div>
 
 ---
 
-## 🚀 核心魔改特性
+## 项目简介
 
-### 1. 🔓 解除全格式文件上传限制（智能分流管线）
-- **前后端双重解禁**：移除上传组件 `<input type="file">` 的 `accept` 格式过滤与 JS 后缀拦截，后端 `ImageService::store()` 放开 `AcceptedFileSuffixes` 校验。
-- **非图片安全跳过**：在后端引入 `$isImage` 智能分流，仅对标准图片格式执行格式转换、质量压缩、水印叠加与违规扫描；遇到视频或任意其他格式文件自动原样直通存储，彻底杜绝 `InterventionImage` 解析非图片异常。
+原版 [Lsky Pro](https://github.com/lsky-org/lsky-pro) 定位为纯图片图床，在服务端校验、图像处理管线与前端预览组件中均强耦合了图片格式假设：不仅拦截视频及常规文件上传，若直接放开后缀限制，还会触发 `Intervention/Image` 解码异常、`Viewer.js` 灯箱无法播放以及画廊缩略图缺失等问题。
 
-### 2. 🎬 纯前端 Canvas 视频自动截帧封面（零 FFmpeg 依赖）
-- **浏览器端算力卸载**：当用户在上传页拖入或选择视频（`mp4`、`webm`、`ogg`、`mov`、`avi`）时，前端自动通过内存 `<video>` 定位至第 `1` 秒，使用 `<canvas>` 提取高清视频帧并转为 Base64 缩略图。
-- **后端缩略图落盘**：新增 `ImageService::makeThumbnailFromBase64()` 方法，随上传请求接收前端生成的视频封面并自动裁剪生成 `400x400` 标准缩略图，使视频在瀑布流画廊中拥有媲美原生视频网站的精美封面。
-
-### 3. ▶️ 全站四端原生视频弹窗播放
-全面改造站内所有预览入口，智能识别视频流并弹出高优先级沉浸式 `<video>` 播放器模态框：
-- **上传队列实时预览**（`resources/views/components/upload.blade.php`）：上传前点击列表缩略图即可本地流式预览视频。
-- **用户个人画廊**（`resources/views/user/images.blade.php`）：通过 `Viewer.js` 的 `filter` 钩子自动放行视频，点击视频封面直接弹出全屏播放器。
-- **公共画廊广场**（`resources/views/common/gallery.blade.php`）：拦截视频直链跳转，原地弹出播放器流畅播放。
-- **后台图片管理控制台**（`resources/views/admin/image/index.blade.php`）：将 `#image-tpl` 改造为动态 `__media__` 容器，管理员审查时可直接在详情弹窗内播放视频。
-
-### 4. 🎛️ 后台角色组极简“全部允许”面板
-- 精简 `resources/views/admin/group/add.blade.php` 与 `edit.blade.php` 中繁琐的后缀复选框矩阵，直观显示绿色高亮 **“全部允许”**，同时内置隐藏域完美兼容原版后端表单验证。
+**Super Lsky Pro** 在保留原版完整存储策略与权限体系的基础上，通过前后端协同改造打通了全格式文件托管与原生视频支持链路。整个方案**不依赖 FFmpeg 等外部二进制工具**，将视频首帧提取算力卸载至客户端浏览器，服务端仅负责安全分流与缩略图落盘，适用于轻量级 VPS 与容器化部署环境。
 
 ---
 
-## 📂 魔改涉及文件清单
+## 核心改造
 
-如果你已经部署了原版 Lsky Pro，只需将本仓库中的以下 **7 个文件** 覆盖至你的服务器对应路径即可完成升级（详见 [docs/MOD_GUIDE.md](./docs/MOD_GUIDE.md)）：
+- **全格式上传放行与安全分流**
+  - 移除前端文件选择器 `<input type="file">` 的 `accept` 格式过滤及上传队列后缀校验，注释服务端 `ImageService::store()` 中的 `AcceptedFileSuffixes` 白名单拦截。
+  - 在上传管线中引入 `$isImage` 媒体类型判定：仅对标准图片格式执行质量压缩、格式转换、水印叠加与第三方违规检测；视频及非图片文件直接透传至底层存储适配器（Local / S3 / OSS / COS / WebDAV 等），避免图像处理引擎报错中断。
+- **浏览器端 Canvas 视频自动截帧（零 FFmpeg 依赖）**
+  - 上传队列识别到 `mp4`、`webm`、`ogg`、`mov`、`avi` 视频文件时，在浏览器内存创建临时 `<video>` 实例并定位至第 `1` 秒，通过 `<canvas>` 绘制帧图像并导出为 Base64 缩略图。
+  - 随表单提交字段 `thumbnail_base64` 回传至服务端，由新增的 `ImageService::makeThumbnailFromBase64()` 统一缩放裁剪为标准 `400×400` PNG 缩略图并落盘至 `public/thumbnails/`，确保画廊瀑布流正常渲染视频封面；非图片且非视频的常规文件则自动应用内置默认文件图标。
+- **全站四端原生视频弹窗播放**
+  - **上传队列预览**（`components/upload.blade.php`）：点击队列缩略图即可通过 `URL.createObjectURL` 本地流式播放待传视频。
+  - **用户个人画廊**（`user/images.blade.php`）：通过 `Viewer.js` 的 `filter` 钩子排除视频条目，绑定自定义点击事件弹出全屏原生 `<video>` 播放器。
+  - **公共画廊广场**（`common/gallery.blade.php`）：拦截 `.gallery-image-link` 视频直链跳转，原地弹出模态播放器。
+  - **后台图片管理**（`admin/image/index.blade.php`）：将 `#image-tpl` 重构为 `__media__` 动态占位容器，后台审查详情时直接内嵌视频播放器。
+- **后台角色组面板精简**
+  - 将角色组创建与编辑页的“允许上传的图片类型”复选框矩阵简化为 **全部允许** 状态展示，同时保留隐藏域输出以完整兼容原有后端表单验证逻辑。
 
-| 模块 | 文件路径 | 改造说明 |
+---
+
+## 改动文件清单
+
+全部改造集中于以下 **7 个核心文件**（逐行操作说明参见 [docs/MOD_GUIDE.md](docs/MOD_GUIDE.md)）：
+
+| 模块 | 文件路径 | 核心变更 |
 | :--- | :--- | :--- |
-| **后端存储服务** | [`app/Services/ImageService.php`](./app/Services/ImageService.php) | 取消后缀限制、非图片跳过压缩/水印/鉴黄、新增 `makeThumbnailFromBase64()` |
-| **角色组创建页** | [`resources/views/admin/group/add.blade.php`](./resources/views/admin/group/add.blade.php) | 上传类型面板简化为“全部允许”并维持隐藏域校验 |
-| **角色组编辑页** | [`resources/views/admin/group/edit.blade.php`](./resources/views/admin/group/edit.blade.php) | 上传类型面板简化为“全部允许”并维持隐藏域校验 |
-| **前端上传组件** | [`resources/views/components/upload.blade.php`](./resources/views/components/upload.blade.php) | 移除文件选择器过滤、Canvas 视频第 1 秒截帧、队列内视频弹窗预览 |
-| **用户个人画廊** | [`resources/views/user/images.blade.php`](./resources/views/user/images.blade.php) | 绕过 `Viewer.js` 视频拦截、绑定画廊视频弹窗播放器 |
-| **公共画廊广场** | [`resources/views/common/gallery.blade.php`](./resources/views/common/gallery.blade.php) | 拦截视频卡片点击、弹出原生视频播放器 |
-| **后台图片管理** | [`resources/views/admin/image/index.blade.php`](./resources/views/admin/image/index.blade.php) | 动态 `__media__` 模板替换，支持后台弹窗直接播放视频 |
+| 后端上传服务 | [`app/Services/ImageService.php`](app/Services/ImageService.php) | 解除后缀限制、`$isImage` 分流、新增 `makeThumbnailFromBase64()` |
+| 角色组创建页 | [`resources/views/admin/group/add.blade.php`](resources/views/admin/group/add.blade.php) | 简化上传格式面板为“全部允许”并保留隐藏域 |
+| 角色组编辑页 | [`resources/views/admin/group/edit.blade.php`](resources/views/admin/group/edit.blade.php) | 简化上传格式面板为“全部允许”并统一 `$default->get()` 调用 |
+| 上传核心组件 | [`resources/views/components/upload.blade.php`](resources/views/components/upload.blade.php) | 移除 `accept` 过滤、Canvas 视频截帧、队列本地视频预览 |
+| 用户个人画廊 | [`resources/views/user/images.blade.php`](resources/views/user/images.blade.php) | `Viewer.js` 视频过滤、画廊原生视频弹窗播放 |
+| 公共画廊广场 | [`resources/views/common/gallery.blade.php`](resources/views/common/gallery.blade.php) | 视频卡片点击拦截与原生模态框播放 |
+| 后台图片管理 | [`resources/views/admin/image/index.blade.php`](resources/views/admin/image/index.blade.php) | `__media__` 动态模板替换，支持后台详情直接播放视频 |
 
 ---
 
-## 🛠️ 安装与存量覆盖升级指南
+## 部署与升级
 
-### 方式一：存量 Lsky Pro 覆盖升级（推荐 Docker / 宝塔 / LNMP 已部署用户）
+### 方式一：存量 Lsky Pro 实例覆盖升级
 
-1. **备份原文件**：建议先备份站点目录下的 `app/Services/ImageService.php` 和 `resources/views/` 目录。
-2. **覆盖魔改文件**：将上表列出的 7 个文件覆盖到你的 Lsky Pro 根目录（例如 `/opt/app-stack/lskypro` 或容器挂载目录）。
-3. **清理 Laravel 视图缓存（必做）**：
+适用于已运行原版 Lsky Pro（Docker / 宝塔 / LNMP）的站点：
+
+1. **备份原文件**：备份站点目录下的 `app/Services/ImageService.php` 与 `resources/views/`。
+2. **覆盖改造文件**：将上述 7 个文件覆盖至站点根目录（如 `/opt/app-stack/lskypro`）。
+3. **清理视图缓存**：
    ```bash
-   # 宿主机直接部署：
+   # 宿主机部署
    php artisan view:clear
 
-   # Docker 容器化部署（假设容器名为 lskypro）：
+   # Docker 容器部署（以容器名 lskypro 为例）
    docker exec -it lskypro php artisan view:clear
    ```
-4. **强制刷新浏览器**：在浏览器按下 `Ctrl + F5` 刷新缓存，即可体验视频与全格式文件上传！
-5. **调整上传大小限制**：如需上传较大视频，请同步调大后台 **角色组 -> 最大文件大小**，以及 Nginx 的 `client_max_body_size` 和 PHP 的 `upload_max_filesize` / `post_max_size`。
+4. **调整上传体积上限**：如需上传大体积视频，请同步调大后台 **角色组 → 最大文件大小**，以及 Nginx `client_max_body_size` 与 PHP `upload_max_filesize`、`post_max_size`。
 
-### 方式二：从源码全新部署
+### 方式二：全新源码部署
 
-#### 环境要求
-- PHP >= 8.0.2（需启用 `BCMath`, `Ctype`, `DOM`, `Fileinfo`, `JSON`, `Mbstring`, `OpenSSL`, `PDO`, `Tokenizer`, `XML`, `Imagick` 扩展）
--启用 `exec`, `shell_exec`, `readlink`, `symlink`, `putenv`, `getenv`, `chmod`, `chown`, `fileperms` 函数
-- MySQL 5.7+ / PostgreSQL 9.6+ / SQLite 3.8.8+ / SQL Server 2017+
+#### 运行环境要求
 
-#### 部署步骤
+- PHP >= 8.0.2（需启用 `BCMath`、`Ctype`、`DOM`、`Fileinfo`、`JSON`、`Mbstring`、`OpenSSL`、`PDO`、`Tokenizer`、`XML`、`Imagick` 扩展）
+- 需放行 `exec`、`shell_exec`、`readlink`、`symlink`、`putenv`、`getenv`、`chmod`、`chown`、`fileperms` 函数
+- 数据库支持：`MySQL 5.7+` / `PostgreSQL 9.6+` / `SQLite 3.8.8+` / `SQL Server 2017+`
+
+#### 安装命令
+
 ```bash
 git clone https://github.com/yyzmia1/super-lsky-pro.git
 cd super-lsky-pro
@@ -97,32 +100,35 @@ composer install --no-dev -o
 chmod -R 755 .
 chown -R www-data:www-data .
 ```
-将 Web 服务器（Nginx / Apache）的运行根目录指向 `public/`，配置伪静态规则后访问域名即可进入图形化安装向导。
+
+将 Web 服务根目录指向 `public/` 并配置 Laravel 伪静态规则，访问站点域名即可进入安装向导。
 
 ---
 
-## 📦 继承自 Lsky Pro 的原版核心特性
+<details>
+<summary>继承自上游 Lsky Pro 的原版基础能力</summary>
 
-* [x] 支持 `本地` 及多种第三方云储存：`AWS S3`、`阿里云 OSS`、`腾讯云 COS`、`七牛云`、`又拍云`、`SFTP`、`FTP`、`WebDav`、`Minio`
-* [x] 多种数据库驱动支持：`MySQL 5.7+`、`PostgreSQL 9.6+`、`SQLite 3.8.8+`、`SQL Server 2017+`
-* [x] 支持多种缓存驱动：`Memcached`、`Redis`、`DynamoDB` 等，默认文件缓存
-* [x] 多文件上传、拖拽上传、粘贴上传、动态切换存储策略、一键复制多格式链接（URL / HTML / BBCode / Markdown）
-* [x] 瀑布流画廊展示，支持鼠标框选、右键菜单、单选多选、相册分类、重命名等操作
-* [x] 自由度极高的角色组与储存策略多对多配置，支持路径/文件命名规则、频率限制、图片水印与文字水印
-* [x] 完整的 RESTful API 接口支持
+- **多存储后端**：支持本地及 `AWS S3`、`阿里云 OSS`、`腾讯云 COS`、`七牛云`、`又拍云`、`SFTP`、`FTP`、`WebDav`、`Minio`。
+- **多缓存驱动**：支持 `Memcached`、`Redis`、`DynamoDB` 及文件缓存。
+- **文件管理**：支持拖拽、粘贴、多文件并发上传，一键复制 URL / HTML / BBCode / Markdown 链接；瀑布流相册、鼠标框选、右键菜单与批量操作。
+- **精细化权限与策略**：支持多角色组与多存储策略交叉绑定、路径与文件命名规则、上传频率限制、水印及第三方内容审核。
+- **开放接口**：提供完整的 RESTful API 支持上传与媒体管理。
 
----
-
-## 🙏 致谢与上游项目
-
-- 上游开源项目：[lsky-org/lsky-pro](https://github.com/lsky-org/lsky-pro)（感谢原作者 [Wisp X](https://github.com/Wisp-X) 打造了如此优秀的图床系统）
-- 魔改与维护：[yyzmia1 (一叶梓喵)](https://github.com/yyzmia1) · [技术博客详细解析](https://yyzmiao.top/2026/06/10/lskypro/)
+</details>
 
 ---
 
-## 📃 开源许可 (License)
+## 致谢
 
-本项目基于 [GNU General Public License v3.0 (GPL-3.0)](./LICENSE) 协议开源。
+- 上游项目：[lsky-org/lsky-pro](https://github.com/lsky-org/lsky-pro)（原作者 [Wisp X](https://github.com/Wisp-X)）
+- 魔改维护：[yyzmia1](https://github.com/yyzmia1) · [详细改造过程记录](https://yyzmiao.top/2026/06/10/lskypro/)
 
-- Original Work Copyright (c) 2018-present [Lsky Pro (Wisp X)](https://github.com/lsky-org/lsky-pro).
-- Modified Work Copyright (c) 2026-present [yyzmia1 (一叶梓喵)](https://github.com/yyzmia1).
+---
+
+## 开源协议
+
+本项目基于 **[GNU General Public License v3.0 (GPLv3)](LICENSE)** 协议开源。
+
+- Original Work Copyright © 2018-present [Lsky Pro (Wisp X)](https://github.com/lsky-org/lsky-pro)
+- Modified Work Copyright © 2026-present [yyzmia1](https://github.com/yyzmia1)
+- 允许自由使用、修改与分发，但任何修改、衍生或重新发布的版本**必须同样以 GPLv3 开源并保留原作者版权声明**。
