@@ -98,9 +98,9 @@ class ImageService
 
         $extension = strtolower($file->getClientOriginalExtension());
 
-        if (! in_array($extension, $configs->get(GroupConfigKey::AcceptedFileSuffixes))) {
-            throw new UploadException('不支持的文件类型');
-        }
+        // if (! in_array($extension, $configs->get(GroupConfigKey::AcceptedFileSuffixes))) {
+        //     throw new UploadException('不支持的文件类型');
+        // }
 
         if ($file->getSize() / 1024 > $configs->get(GroupConfigKey::MaximumFileSize)) {
             throw new UploadException("图片大小超出限制");
@@ -151,8 +151,10 @@ class ImageService
         // 上传频率限制
         $this->rateLimiter($configs, $request);
 
+        $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico', 'tif', 'svg']);
+
         // 图片处理，跳过 ico gif svg
-        if (! in_array($extension, ['ico', 'gif', 'svg'])) {
+        if ($isImage && ! in_array($extension, ['ico', 'gif', 'svg'])) {
             // 图片保存质量与格式
             $quality = $configs->get(GroupConfigKey::ImageSaveQuality, 75);
             $format = $configs->get(GroupConfigKey::ImageSaveFormat);
@@ -246,7 +248,7 @@ class ImageService
         }
 
         // 图片检测，跳过 tif、ico、psd、svg 格式
-        if ($configs->get(GroupConfigKey::IsEnableScan) && ! in_array($extension, ['psd', 'ico', 'tif', 'svg'])) {
+        if ($isImage && $configs->get(GroupConfigKey::IsEnableScan) && ! in_array($extension, ['psd', 'ico', 'tif', 'svg'])) {
             $scanConfigs = $configs->get(GroupConfigKey::ScanConfigs);
             if ($this->scan(
                 driver: $scanConfigs['driver'],
@@ -266,10 +268,16 @@ class ImageService
             }
         }
 
-        $this->makeThumbnail($image, $file);
+        // 生成缩略图
+        if ($isImage) {
+            $this->makeThumbnail($image, $file);
+        } else if ($request->has('thumbnail_base64')) {
+            // 如果是视频等非图片，且前端传来了 base64 封面
+            $this->makeThumbnailFromBase64($image, $request->input('thumbnail_base64'));
+        }
 
         // 上传完成后删除临时文件
-        unlink($file->getPathname());
+        @unlink($file->getPathname());
 
         return $image;
     }
@@ -579,6 +587,44 @@ class ImageService
                 }
             } catch (\Throwable $e) {
                 Utils::e($e, '生成缩略图时出现异常');
+            }
+        }
+    }
+
+    /**
+     * 从前端截图的 Base64 数据生成缩略图
+     */
+    public function makeThumbnailFromBase64(Image $image, string $base64Data, int $max = 400, bool $force = false): void
+    {
+        $pathname = public_path($image->getThumbnailPathname());
+
+        if (! file_exists($pathname) || $force) {
+            try {
+                if (! is_dir(dirname($pathname))) {
+                    @mkdir(dirname($pathname), 0755, true);
+                }
+
+                @ini_set('memory_limit', '512M');
+
+                // 剥离 Base64 头部
+                $base64Data = preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
+                $imgData = base64_decode($base64Data);
+
+                $img = InterventionImage::make($imgData);
+
+                $width = $w = $img->width();
+                $height = $h = $img->height();
+
+                if ($w > $max && $h > $max) {
+                    $scale = min($max / $w, $max / $h);
+                    $width  = (int)($w * $scale);
+                    $height = (int)($h * $scale);
+                }
+
+                $img->fit($width, $height, fn($constraint) => $constraint->upsize())->encode('png', 60)->save($pathname);
+                $img->destroy();
+            } catch (\Throwable $e) {
+                Utils::e($e, '生成视频缩略图时出现异常');
             }
         }
     }

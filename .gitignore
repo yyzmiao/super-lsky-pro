@@ -1,20 +1,41 @@
+# Lsky Pro Locks & Archives
 /installed.lock
 /upgrading.lock
 /*.zip
+
+# Dependencies & Build Artifacts
 /node_modules
+/vendor
 /public/hot
 /public/storage
 /public/js/custom.js
+
+# User Uploaded Media & Generated Thumbnails
+/public/i
+/public/thumbnails
+/public/jpg
+
+# Environment & Secrets
 /storage/*.key
-/vendor
 .env
 .env.backup
 .phpunit.result.cache
 docker-compose.override.yml
 Homestead.json
 Homestead.yaml
+
+# Logs
 npm-debug.log
 yarn-error.log
+
+# IDEs & Editors
 /.idea
 /.vscode
-/public/i
+
+# OS & Sync Tool Metadata (Syncthing / macOS / Windows)
+.DS_Store
+Thumbs.db
+.stfolder
+.stignore
+.syncthing.*
+*.sync-conflict-*

@@ -104,11 +104,12 @@
 
                             <div class="col-span-6">
                                 <x-fieldset title="允许上传的图片类型">
-                                    @foreach($default['accepted_file_suffixes'] as $extension)
-                                        <x-fieldset-checkbox id="configs[accepted_file_suffixes]_{{ $extension }}" name="configs[accepted_file_suffixes][]" value="{{ $extension }}" :checked="in_array($extension, $group->configs->get('accepted_file_suffixes'))">
-                                            {{ strtoupper($extension) }}
-                                        </x-fieldset-checkbox>
-                                    @endforeach
+                                    <div class="mt-2 text-sm text-green-600 font-bold">全部允许</div>
+                                    <div class="hidden">
+                                        @foreach($default->get('accepted_file_suffixes') as $extension)
+                                            <input type="hidden" name="configs[accepted_file_suffixes][]" value="{{ $extension }}">
+                                        @endforeach
+                                    </div>
                                 </x-fieldset>
                             </div>
                         </div>

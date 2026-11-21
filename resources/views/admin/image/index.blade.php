@@ -60,9 +60,7 @@
     <script type="text/html" id="image-tpl">
         <div class="w-full mt-4">
             <div class="w-full mb-4 rounded-sm overflow-hidden flex items-center justify-center">
-                <a class="w-full" href="__url__" target="_blank">
-                    <img src="__url__" alt="__name__" class="w-full object-center object-cover">
-                </a>
+                __media__
             </div>
             <div class="relative rounded-md bg-white mb-8 overflow-hidden">
                 <dl>
@@ -354,9 +352,15 @@
             $('.item').click(function () {
                 let image = $(this).data('json');
                 let previewUrl = ['psd', 'tif'].indexOf(image.extension) === -1 ? image.url : image.thumb_url;
+
+                let isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].indexOf(image.extension) !== -1;
+                let mediaHtml = isVideo
+                    ? '<video controls autoplay class="w-full h-auto max-h-[80vh] shadow-lg rounded bg-black" src="'+previewUrl+'"></video>'
+                    : '<a class="w-full" href="'+previewUrl+'" target="_blank"><img src="'+previewUrl+'" alt="'+image.name+'" class="w-full object-center object-cover"></a>';
+
                 let html = $('#image-tpl').html()
+                    .replace(/__media__/g, mediaHtml)
                     .replace(/__id__/g, image.id)
-                    .replace(/__url__/g, previewUrl)
                     .replace(/__user_name__/g, image.user ? image.user.name+'('+image.user.email+')' : '游客')
                     .replace(/__user_email__/g, image.user ? image.user.email : '-')
                     .replace(/__album_name__/g, image.album ? image.album.name : '-')

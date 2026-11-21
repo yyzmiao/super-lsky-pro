@@ -225,7 +225,13 @@
             const $photos = $(IMAGES_GRID);
             const $drawer = $("#drawer");
             const $drawerMask = $('#drawer-mask');
-            const viewer = new Viewer(document.getElementById('images-grid'), {url: 'data-original'});
+            const viewer = new Viewer(document.getElementById('images-grid'), {
+                url: 'data-original',
+                filter(image) {
+                    let src = image.getAttribute('data-original');
+                    return !src.match(/\.(mp4|webm|mov|avi|ogg)$/i);
+                }
+            });
             const drawer = {
                 open(title, content, callback) {
                     $drawerMask.fadeIn();
@@ -512,7 +518,23 @@
             $photos.on('click', '.image-selector', function () {
                 ds.toggleSelection($(this).closest('a'));
                 bindOperates();
-            })
+            });
+
+            $photos.on('click', 'img', function (e) {
+                let url = $(this).attr('data-original');
+                if (url.match(/\.(mp4|webm|mov|avi|ogg)$/i)) {
+                    e.stopPropagation();
+                    let videoModal = `
+                        <div id="video-preview-modal" style="z-index: 999999;" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80" onclick="$(this).remove()">
+                            <button style="position: fixed; top: 20px; right: 30px; font-size: 50px; line-height: 1; color: white; z-index: 9999999; cursor: pointer; background: transparent; border: none; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="$('#video-preview-modal').remove()">&times;</button>
+                            <div style="width: 100%; max-width: 1000px; padding: 20px; text-align: center;" onclick="event.stopPropagation()">
+                                <video src="${url}" controls autoplay style="max-width: 100%; max-height: 85vh; margin: 0 auto; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); background: #000; outline: none;"></video>
+                            </div>
+                        </div>
+                    `;
+                    $('body').append(videoModal);
+                }
+            });
         </script>
         <script>
             context.init({
